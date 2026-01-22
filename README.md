@@ -1,14 +1,14 @@
-# 🔒 Synthetic Attack Log Generator
+# Synthetic Attack Log Generator
 
 A powerful Python tool for generating realistic synthetic cybersecurity attack logs. Designed for testing SIEM systems, training security analysts, and validating detection algorithms.
 
 ## 🚀 Features
 
 - **Multiple Attack Models**:
-  - 🔑 **Credential Stuffing**: Simulates massive login attempts across user lists.
-  - 💉 **SQL Injection**: Generates various payload patterns (UNION, boolean-based) with HTTP context.
-  - 🔓 **Brute Force**: Simulates password attacks against SSH, RDP, FTP, and Telnet.
-  - 📡 **Port Scanning**: Sequential, random, and common port reconnaissance patterns.
+  - **Credential Stuffing**: Simulates massive login attempts across user lists.
+  -  **SQL Injection**: Generates various payload patterns (UNION, boolean-based) with HTTP context.
+  -  **Brute Force**: Simulates password attacks against SSH, RDP, FTP, and Telnet.
+  -  **Port Scanning**: Sequential, random, and common port reconnaissance patterns.
 - **Distributed Attack Simulation**: Support for multiple source IPs (specific list or randomized) to simulate botnets or DDoS.
 - **Realistic Data**: Includes realistic timestamps, HTTP status codes, payloads, and user agents.
 - **JSON Output**: structured, easy-to-parse JSON logs saved with timestamped filenames.
