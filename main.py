@@ -2,12 +2,13 @@ import json
 import os
 import argparse
 import random
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from attack_models.credential_stuffing import generate_credential_stuffing_attack
 from attack_models.sql_injection import generate_sql_injection_attack
 from attack_models.brute_force import generate_brute_force_attack
 from attack_models.port_scan import generate_port_scan_attack
+from attack_models.noise import generate_benign_traffic
 
 
 def generate_random_ip():
@@ -35,7 +36,7 @@ def parse_source_ips(src_ip_arg, random_ips, ip_count):
         return [src_ip_arg]
 
 
-def save_logs_to_file(logs: list[dict], output_dir: str = "logs", attack_type: str = "unknown") -> str:
+def save_logs_to_file(logs: list[dict], output_dir: str = "logs", attack_type: str = "unknown", is_noisy: bool = False) -> str:
     """
     Save generated logs to a JSON file in the specified directory.
     
@@ -43,6 +44,7 @@ def save_logs_to_file(logs: list[dict], output_dir: str = "logs", attack_type: s
         logs: List of log entries to save
         output_dir: Directory to save logs to (default: "logs")
         attack_type: Type of attack for filename
+        is_noisy: Whether logs contain noise
     
     Returns:
         Path to the saved file
@@ -52,7 +54,8 @@ def save_logs_to_file(logs: list[dict], output_dir: str = "logs", attack_type: s
     
     # Generate filename with timestamp
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    filename = f"attack_{attack_type}_{timestamp}.json"
+    suffix = "_noisy" if is_noisy else ""
+    filename = f"attack_{attack_type}{suffix}_{timestamp}.json"
     filepath = os.path.join(output_dir, filename)
     
     # Save logs to file
@@ -60,8 +63,7 @@ def save_logs_to_file(logs: list[dict], output_dir: str = "logs", attack_type: s
         json.dump(logs, f, indent=2, ensure_ascii=False)
     
     return filepath
-
-
+    
 def generate_credential_stuffing(args, src_ips):
     """Generate credential stuffing attack logs."""
     usernames = ["admin", "user1", "test", "root", "administrator", "guest", "user", "demo"]
@@ -145,7 +147,6 @@ def list_attacks():
         print(f"  • {attack:20s} - {description}")
     print()
 
-
 def parse_arguments():
     """Parse command-line arguments."""
     parser = argparse.ArgumentParser(
@@ -162,16 +163,21 @@ Examples:
   # Random source IPs for distributed attack simulation
   python main.py -t brute_force --random-ips --ip-count 5
   
+  # Add noise (benign traffic) to make logs realistic
+  python main.py -t port_scan --add-noise --noise-count 200
+  
   # Custom parameters
   python main.py -t port_scan --target 192.168.1.100 --count 30
   
   # Generate all attack types
-  python main.py -t all --random-ips --ip-count 3
+  python main.py -t all --random-ips --ip-count 3 --add-noise
   
   # List available attacks
   python main.py --list-attacks
         """
     )
+    
+    # ... (existing args) ...
     
     parser.add_argument(
         '-t', '--attack-type',
@@ -203,6 +209,19 @@ Examples:
         type=int,
         default=3,
         help='Number of random IPs to generate when --random-ips is used (default: 3)'
+    )
+    
+    parser.add_argument(
+        '--add-noise',
+        action='store_true',
+        help='Add benign (normal) traffic noise to the log output'
+    )
+    
+    parser.add_argument(
+        '--noise-count',
+        type=int,
+        default=50,
+        help='Number of benign log entries to generate (default: 50)'
     )
     
     parser.add_argument(
@@ -262,9 +281,12 @@ def main():
     print(f"\n🔒 Synthetic Attack Log Generator")
     print(f"{'=' * 60}")
     print(f"Source IPs: {', '.join(src_ips) if len(src_ips) <= 5 else f'{len(src_ips)} random IPs'}")
+    if args.add_noise:
+        print(f"Noise: Enabled ({args.noise_count} benign entries)")
     print(f"{'=' * 60}\n")
     
     total_logs = 0
+    total_noise = 0
     
     # Generate logs for each attack type
     for attack_type in attack_types:
@@ -274,18 +296,55 @@ def main():
         logs, attack_name = generator(args, src_ips)
         
         if logs:
+            # Generate noise if requested
+            if args.add_noise:
+                # Find time range of attack
+                timestamps = [log.get("timestamp") for log in logs if log.get("timestamp")]
+                if timestamps:
+                    # Convert string timestamps to datetime objects
+                    # Format is ISO (might have "Z" or not based on previous code)
+                    # The utils use isoformat() + "Z"
+                    times = []
+                    for ts in timestamps:
+                        if ts.endswith('Z'):
+                            ts = ts[:-1]
+                        try:
+                            # Try simple iso format first
+                            times.append(datetime.fromisoformat(ts))
+                        except ValueError:
+                            pass
+                    
+                    if times:
+                        start_time = min(times)
+                        end_time = max(times)
+                        # Add some buffer to windows
+                        start_time -= timedelta(seconds=60)
+                        end_time += timedelta(seconds=60)
+                        
+                        noise_logs = generate_benign_traffic(
+                            start_time=start_time,
+                            end_time=end_time,
+                            hosts=[args.target],
+                            count=args.noise_count
+                        )
+                        
+                        logs.extend(noise_logs)
+                        logs.sort(key=lambda x: x.get("timestamp", ""))
+                        total_noise += len(noise_logs)
+                        print(f"  ✓ Added {len(noise_logs)} benign noise entries")
+
             # Save to file
-            filepath = save_logs_to_file(logs, args.output_dir, attack_name)
+            filepath = save_logs_to_file(logs, args.output_dir, attack_name, args.add_noise)
             total_logs += len(logs)
             
-            print(f"  ✓ Generated {len(logs)} log entries")
+            print(f"  ✓ Generated {len(logs)} total entries")
             print(f"  ✓ Saved to: {filepath}\n")
         else:
             print(f"  ✗ No logs generated\n")
     
     # Summary
     print(f"{'=' * 60}")
-    print(f"📊 Summary: Generated {total_logs} total log entries")
+    print(f"📊 Summary: Generated {total_logs} log entries ({total_noise} noise)")
     print(f"📁 Output directory: {args.output_dir}\n")
 
 

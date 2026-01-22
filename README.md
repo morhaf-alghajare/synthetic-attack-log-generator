@@ -44,6 +44,8 @@ python main.py [options]
 | `--src-ip` | Source IP(s). Single IP or comma-separated list | `192.168.1.100` |
 | `--random-ips` | Flag to generate random source IPs (simulates distributed attack) | `False` |
 | `--ip-count` | Number of random IPs to generate if using `--random-ips` | `3` |
+| `--add-noise` | Add benign (normal) traffic to mix with attacks | `False` |
+| `--noise-count` | Number of benign log entries to generate | `50` |
 | `--count` | Number of attempts/logs to generate | Varies by attack |
 | `--service` | Specific service for brute force (`ssh`, `rdp`, `ftp`, `telnet`) | `ssh` |
 | `-o, --output-dir` | Directory to save JSON logs | `logs` |
@@ -80,6 +82,12 @@ Generate logs for ALL attack types to create a diverse dataset:
 python main.py -t all --random-ips --ip-count 5
 ```
 
+### 6. Realistic Noise Generation
+Add benign traffic (normal user activity) to mix with attack logs:
+```bash
+python main.py -t port_scan --add-noise --noise-count 200
+```
+
 ## 📄 Output Format
 
 Logs are saved as JSON files in the `logs/` directory (e.g., `logs/attack_sql_injection_20260122_190725.json`).
@@ -100,13 +108,3 @@ Logs are saved as JSON files in the `logs/` directory (e.g., `logs/attack_sql_in
   "attack_id": "a1b2c3d4-e5f6-7890-1234-567890abcdef"
 }
 ```
-
-## 🤝 Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-1. Fork the project
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
