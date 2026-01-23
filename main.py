@@ -9,6 +9,9 @@ from attack_models.sql_injection import generate_sql_injection_attack
 from attack_models.brute_force import generate_brute_force_attack
 from attack_models.port_scan import generate_port_scan_attack
 from attack_models.noise import generate_benign_traffic
+from attack_models.ddos import generate_ddos_attack
+from attack_models.ransomware import generate_ransomware_attack
+from attack_models.exfiltration import generate_exfiltration_attack
 
 
 def generate_random_ip():
@@ -132,6 +135,56 @@ def generate_port_scan_logs(args, src_ips):
     return all_logs, "port_scan"
 
 
+def generate_ddos_logs(args, src_ips):
+    """Generate DDoS attack logs."""
+    all_logs = []
+    
+    for src_ip in src_ips:
+        logs = generate_ddos_attack(
+            start_time=datetime.now(),
+            src_ip=src_ip,
+            target_ip=args.target,
+            duration_seconds=60,
+            intensity="high"
+        )
+        all_logs.extend(logs)
+    
+    return all_logs, "ddos"
+
+
+def generate_ransomware_logs(args, src_ips):
+    """Generate Ransomware attack logs."""
+    all_logs = []
+    
+    # Ransomware is usually single-host, but we'll iterate IPs as "compromised hosts"
+    for src_ip in src_ips:
+        logs = generate_ransomware_attack(
+            start_time=datetime.now(),
+            src_ip=src_ip,
+            target_host=args.target,
+            file_count=args.count if args.count else 20
+        )
+        all_logs.extend(logs)
+    
+    return all_logs, "ransomware"
+
+
+def generate_exfiltration_logs(args, src_ips):
+    """Generate Data Exfiltration logs."""
+    all_logs = []
+    
+    for src_ip in src_ips:
+        logs = generate_exfiltration_attack(
+            start_time=datetime.now(),
+            src_ip=src_ip,
+            target_ip="45.10.10.10", # Simulated external C2
+            total_size_mb=args.count if args.count else 50
+        )
+        all_logs.extend(logs)
+    
+    return all_logs, "exfiltration"
+
+
 def list_attacks():
     """List all available attack types."""
     attacks = {
@@ -139,6 +192,9 @@ def list_attacks():
         "sql_injection": "SQL injection attack with various payloads",
         "brute_force": "Brute force password attack (SSH/RDP/FTP)",
         "port_scan": "Network port scanning reconnaissance",
+        "ddos": "Distributed Denial of Service (SYN Flood)",
+        "ransomware": "Ransomware file encryption and system inhibition",
+        "exfiltration": "Unauthorized data transfer to external IPs",
         "all": "Generate all attack types"
     }
     
@@ -181,7 +237,7 @@ Examples:
     
     parser.add_argument(
         '-t', '--attack-type',
-        choices=['credential_stuffing', 'sql_injection', 'brute_force', 'port_scan', 'all'],
+        choices=['credential_stuffing', 'sql_injection', 'brute_force', 'port_scan', 'ddos', 'ransomware', 'exfiltration', 'all'],
         default='credential_stuffing',
         help='Type of attack to simulate (default: credential_stuffing)'
     )
@@ -266,12 +322,15 @@ def main():
         'credential_stuffing': generate_credential_stuffing,
         'sql_injection': generate_sql_injection_logs,
         'brute_force': generate_brute_force_logs,
-        'port_scan': generate_port_scan_logs
+        'port_scan': generate_port_scan_logs,
+        'ddos': generate_ddos_logs,
+        'ransomware': generate_ransomware_logs,
+        'exfiltration': generate_exfiltration_logs
     }
     
     # Determine which attacks to run
     if args.attack_type == 'all':
-        attack_types = ['credential_stuffing', 'sql_injection', 'brute_force', 'port_scan']
+        attack_types = ['credential_stuffing', 'sql_injection', 'brute_force', 'port_scan', 'ddos', 'ransomware', 'exfiltration']
     else:
         attack_types = [args.attack_type]
     

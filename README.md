@@ -9,6 +9,9 @@ A powerful Python tool for generating realistic synthetic cybersecurity attack l
   - 💉 **SQL Injection**: Generates various payload patterns (UNION, boolean-based) with HTTP context.
   - 🔓 **Brute Force**: Simulates password attacks against SSH, RDP, FTP, and Telnet.
   - 📡 **Port Scanning**: Sequential, random, and common port reconnaissance patterns.
+  - 🌊 **DDoS**: High-volume SYN flood attacks simulating distributed denial of service.
+  - 🔐 **Ransomware**: Simulates file encryption events, ransom note creation, and backup deletion.
+  - 📤 **Data Exfiltration**: Simulates unauthorized large data transfers to external command-and-control servers.
 - **Distributed Attack Simulation**: Support for multiple source IPs (specific list or randomized) to simulate botnets or DDoS.
 - **Realistic Data**: Includes realistic timestamps, HTTP status codes, payloads, and user agents.
 - **JSON Output**: structured, easy-to-parse JSON logs saved with timestamped filenames.
@@ -39,7 +42,7 @@ python main.py [options]
 
 | Argument | Description | Default |
 |----------|-------------|---------|
-| `-t, --attack-type` | Type of attack (`credential_stuffing`, `sql_injection`, `brute_force`, `port_scan`, `all`) | `credential_stuffing` |
+| `-t, --attack-type` | Type of attack (`credential_stuffing`, `sql_injection`, `brute_force`, `port_scan`, `ddos`, `ransomware`, `exfiltration`, `all`) | `credential_stuffing` |
 | `--target` | Target host, IP, or URL | `target.example.com` |
 | `--src-ip` | Source IP(s). Single IP or comma-separated list | `192.168.1.100` |
 | `--random-ips` | Flag to generate random source IPs (simulates distributed attack) | `False` |
@@ -86,6 +89,18 @@ python main.py -t all --random-ips --ip-count 5
 Add benign traffic (normal user activity) to mix with attack logs:
 ```bash
 python main.py -t port_scan --add-noise --noise-count 200
+```
+
+### 7. New Attack Models (DDoS, Ransomware, Exfiltration)
+```bash
+# DDoS Attack (SYN Flood)
+python main.py -t ddos --count 1000
+
+# Ransomware Simulation
+python main.py -t ransomware --count 50
+
+# Data Exfiltration
+python main.py -t exfiltration --count 100
 ```
 
 ## 📄 Output Format
